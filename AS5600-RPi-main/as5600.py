@@ -44,27 +44,60 @@ def configureAS5600():
 def readRawAngle():
     byte1 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR)
     byte2 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR+1)
-    print(str(byte1*256 + byte2))
+    RawAngle = (byte1*256) + byte2
+    #print(str(RawAngle))
+    #print(str(byte1*256 + byte2))
     
 def checkMagnet():
     byte = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_STATUS_REG_ADDR)
     byte = byte & 0x38
-    if byte == 0x20: # Magnet is properly placed
-        #print("Magnet is properly placed")
+    if  byte == 0x20:
+        print("Magnet is detected")
         return True
     else:
-        #print("Magnet not detected")
+        print("Magnet not detected")   
         return False
 
 # Open I2C device
 BUS = smbus.SMBus(I2C_BUS)
-BUS.open(I2C_BUS)    
+BUS.open(I2C_BUS) 
+
+def calculate_rpm():
+    # Configure your AS5600 sensor and other setup if needed
+    byte1 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR)
+    byte2 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR+1)
+    RawAngle = (byte1*256) + byte2
+    # Variables for RPM calculation
+    previous_angle = RawAngle
+    start_time = time.time()
+
+    # Wait for at least one complete revolution
+    time.sleep(0.05)  # Adjust the sleep duration based on the expected RPM range
+
+    byte1 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR)
+    byte2 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR+1)
+    RawAngle = (byte1*256) + byte2
+
+    # Measure time for one revolution
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    # Calculate RPM
+    current_angle = RawAngle
+    angle_change = current_angle - previous_angle
+    if angle_change < 0:
+        angle_change += 4096  # Adjust for angle rollover
+
+    rpm = (angle_change / 4096) / elapsed_time * 60
+    #dr = cw
+    #return rpm
+    print(f"RPM: {rpm:.2f}")
 
 # Configure AS5600 operation
 configureAS5600()
 
 # Data acquisition
-while True:
-    if checkMagnet():
-        readRawAngle()
-    time.sleep(0.1)
+#checkMagnet()
+#while True:
+ #   if checkMagnet():
+#      readRawAngle()
