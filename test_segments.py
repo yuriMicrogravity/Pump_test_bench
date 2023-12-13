@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 import time
 import smbus
 import csv
@@ -13,15 +13,14 @@ from current_sensor import read_current_sensor
 from SHT35D_temp_humidity import read_sht35d
 from slf3s_1300f import measure_flow_rate, measure_flow_rate_average, signaling_flag_air, product_id_serial
 
-test_config = input("Which configuration are you testing: ")
+""" test_config = input("Which configuration are you testing: ")
 print(f"Test commencing for the configuration {test_config} on {date.today()}")
 
-
-""" with open(f'{test_config}_{date.today}.csv', mode='w') as test_file:
-    writer = csv.writer(test_file)
-    header = ['Time', 'Rotation', 'Current', 'Pressure']
-    writer.writerow(header) """
-
+with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as test_file:
+    fnames = ['Time', 'Rotation', 'Current', 'Pressure']
+    writer = csv.DictWriter(test_file, fieldnames=fnames, delimiter=',')
+    writer.writeheader() """
+valve_set(102030)
 def max_pressure_test_air_cw():
     # This function executes all steps required in the maximum pressure test for air in clockwise direction
     valve_set(112130)
@@ -31,10 +30,10 @@ def max_pressure_test_air_cw():
     start_time = time.time()
     time_limit = 10 # 2 minutes
     pressure_limit = 2000 # 2 bar absolute
-    with open(f'{test_config}_{date.today}.csv', mode='w', newline='') as test_file:
+    """ with open(f'{test_config}_{date.today}.csv', mode='w', newline='') as test_file:
         writer = csv.writer(test_file)
         header = ['Time', 'Rotation', 'Current', 'Pressure']
-        writer.writerow(header)
+        writer.writerow(header) """
     try:
         while True:
             #Measure pressure
@@ -59,10 +58,10 @@ def max_pressure_test_air_cw():
             #Print or process the current pressure value
             print(f"Pressure:{current_pressure} mbar")
             print(f"Current = {motor_current:.3f} mA")
-            with open(f'{test_config}_{date.today}.csv', mode='w') as test_file:
-                writer = csv.writer(test_file)
-                line_write = [time.time(), 'cw', {motor_current}, {current_pressure}]
-                writer.writerow(line_write)
+            with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as test_file:
+                fnames = ['Time', 'Rotation', 'Current', 'Pressure']
+                writer = csv.DictWriter(test_file, fieldnames=fnames, delimiter=',')
+                writer.writerow({'Time': datetime.now(), 'Rotation': 'cw', 'Current': f'{motor_current:.3f}', 'Pressure': current_pressure})
 
             #Adjust the sleep duration based on desired measurement frequency
             time.sleep(0.5)
@@ -82,6 +81,7 @@ def min_vacuum_test_air_cw():
         while True:
             #Measure pressure
             current_pressure = read_psensor_fluid()
+            motor_current = read_current_sensor()
             #This function reads value from the pressure sensor inside the fluidic loop.
 
             #Checking if the duration limit is reached
@@ -98,6 +98,10 @@ def min_vacuum_test_air_cw():
 
             #Print or process the current pressure value
             print(f"Pressure:{current_pressure} mbar")
+            with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as test_file:
+                fnames = ['Time', 'Rotation', 'Current', 'Pressure']
+                writer = csv.DictWriter(test_file, fieldnames=fnames, delimiter=',')
+                writer.writerow({'Time': datetime.now(), 'Rotation': 'cw', 'Current': f'{motor_current:.3f}', 'Pressure': current_pressure})
 
             #Adjust the sleep duration based on desired measurement frequency
             time.sleep(0.5)
@@ -353,7 +357,8 @@ def empty_fluidic_loop():
     run_pump("stop")
 
 
-
+#max_pressure_test_air_cw()
+#min_vacuum_test_air_cw()
 #check_sensors()
 #valve_set(112131)
 #time.sleep(3)
@@ -363,7 +368,7 @@ def empty_fluidic_loop():
 #leak_test_ccw()
 #flow_rate_test_cw()
 
-#Standard sequence for a full run of the testbench
+""" #Standard sequence for a full run of the testbench
 checkMagnet()
 check_sensors()
 #test configuration name
@@ -380,4 +385,4 @@ max_pressure_test_water_ccw()
 leak_test_ccw()
 empty_fluidic_loop()
 print("Test sequence completed successfully")
-GPIO.cleanup()
+GPIO.cleanup() """
