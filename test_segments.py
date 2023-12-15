@@ -20,7 +20,7 @@ with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as tes
     fnames = ['Time', 'Rotation', 'Current', 'Pressure']
     writer = csv.DictWriter(test_file, fieldnames=fnames, delimiter=',')
     writer.writeheader() """
-valve_set(102030)
+    
 def max_pressure_test_air_cw():
     # This function executes all steps required in the maximum pressure test for air in clockwise direction
     valve_set(112130)
