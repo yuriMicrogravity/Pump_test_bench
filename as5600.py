@@ -70,7 +70,7 @@ def calculate_rpm():
     previous_angle = RawAngle1* 0.087890625
     start_time = time.time()
 
-    time.sleep(0.01)  # Adjust the sleep duration based on the expected RPM range
+    time.sleep(0.05)  # Adjust the sleep duration based on the expected RPM range
 
     byte1 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR)
     byte2 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR+1)
@@ -111,14 +111,48 @@ def calculate_rpm():
 
     rpm = (angle_change / 360) / elapsed_time * 60
     #return rpm
-    print(f"RPM: {rpm:.2f}{direction}")
+    print(f"RPM: {rpm:.2f}  {direction}")
+
+""" def calculate_avg_rpm():
+    
+    # Variables for RPM calculation
+    byte1 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR)
+    byte2 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR+1)
+    RawAngle1 = (byte1*256) + byte2
+    previous_angle = RawAngle1* 0.087890625
+    start_time = time.time()
+
+    time.sleep(0.05)  # Adjust the sleep duration based on the expected RPM range
+
+    byte1 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR)
+    byte2 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR+1)
+    RawAngle2 = (byte1*256) + byte2
+    current_angle = RawAngle2 * 0.087890625
+
+    # Measure time for one revolution
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    
+    # Calculate RPM
+    cw = "Clockwise"
+    ccw = "Counterclockwise"
+    if  previous_angle < current_angle:
+        angle_change = current_angle - previous_angle
+        direction = cw
+    else:
+        direction = 2
+        angle_change = previous_angle - current_angle
+        direction = ccw
+
+    rpm = (angle_change / 360) / elapsed_time * 60
+    #return rpm
+    print(f"RPM: {rpm:.2f}  {direction}") """
 
 # Configure AS5600 operation
-configureAS5600()
-while True:
-    print(f"direction: {direction}")
+#configureAS5600()
+""" while True:
     calculate_rpm()
-    time.sleep(0.2)
+    time.sleep(0.2) """
 # Data acquisition
 #checkMagnet()
 #while True:
