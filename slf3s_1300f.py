@@ -85,7 +85,7 @@ def signaling_flag_air():
     sensor.stop_continuous_measurement()
 
 #product_id_serial()
-signaling_flag_air()
+#signaling_flag_air()
 #measure_flow_rate()
 
 def measure_flow_rate_average(sampling_frequency, measurement_duration):
@@ -98,22 +98,24 @@ def measure_flow_rate_average(sampling_frequency, measurement_duration):
         sample_interval = 1 / sampling_frequency
         number_of_samples = (sampling_frequency) * (measurement_duration)
         samples = 0.00
+        count = 0
         start_time = time.time()
         sensor.start_h2o_continuous_measurement()
         try:
-            while time.time() - start_time < measurement_duration:
+            while time.time() - start_time <= measurement_duration:
                 (a_flow, a_temperature, a_signaling_flags
                 ) = sensor.read_measurement_data_new(InvFlowScaleFactors.SLF3S_1300F)
                 print(f"a_flow: {a_flow:.2f}; "
                     f"a_temperature: {a_temperature}; "
                     f"a_signaling_flags: {a_signaling_flags}; "
                     )
+                count = count +1
                 samples = samples + a_flow
                 time.sleep(sample_interval)
         except KeyboardInterrupt:
             print("Measurement stopped due to user interruption")
         sensor.stop_continuous_measurement()
-        average_flow = samples / number_of_samples
+        average_flow = samples / count
         print(f"Average flow of the measurement cycle is {average_flow:.2f} ml/min")
         return average_flow
         
