@@ -250,5 +250,6 @@ def read_psensor_env():
         raw_pressure = psensor.read_raw_pressure(osr=512)
         press, temp = psensor.convert_raw_readings(raw_pressure, raw_temperature)
         print("fluid pressure={} mBar, fluid temperature={} C".format(press, temp))
-        time.sleep(0.5)
+	return press        
+	time.sleep(0.5)
 read_psensor_env()
