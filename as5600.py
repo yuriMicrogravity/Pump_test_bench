@@ -114,39 +114,42 @@ def calculate_rpm():
     print(f"RPM: {rpm:.2f}  {direction}")
 
 """ def calculate_avg_rpm():
-    
-    # Variables for RPM calculation
-    byte1 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR)
-    byte2 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR+1)
-    RawAngle1 = (byte1*256) + byte2
-    previous_angle = RawAngle1* 0.087890625
+    rpm_values = []  # List to store RPM values measured every 50 milliseconds
     start_time = time.time()
 
-    time.sleep(0.05)  # Adjust the sleep duration based on the expected RPM range
+    while True:
+        byte1 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR)
+        byte2 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR+1)
+        RawAngle1 = (byte1 * 256) + byte2
+        previous_angle = RawAngle1 * 0.087890625
+        time.sleep(0.05)  # Wait for 50 milliseconds
 
-    byte1 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR)
-    byte2 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR+1)
-    RawAngle2 = (byte1*256) + byte2
-    current_angle = RawAngle2 * 0.087890625
+        byte1 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR)
+        byte2 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR+1)
+        RawAngle2 = (byte1 * 256) + byte2
+        current_angle = RawAngle2 * 0.087890625
 
-    # Measure time for one revolution
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    
-    # Calculate RPM
-    cw = "Clockwise"
-    ccw = "Counterclockwise"
-    if  previous_angle < current_angle:
-        angle_change = current_angle - previous_angle
-        direction = cw
-    else:
-        direction = 2
-        angle_change = previous_angle - current_angle
-        direction = ccw
+        # Calculate RPM for this interval
+        angle_change = abs(current_angle - previous_angle)
+        elapsed_time = time.time() - start_time
+        rpm = (angle_change / 360) / (0.05) * 60 #replace with elapsedtime instead of 0.05 if does not workout
 
-    rpm = (angle_change / 360) / elapsed_time * 60
-    #return rpm
-    print(f"RPM: {rpm:.2f}  {direction}") """
+        # Add the RPM value to the list
+        rpm_values.append(rpm)
+
+        # Check if one second has elapsed
+        if elapsed_time >= 1:
+            # Compute the average RPM for the past second
+            average_rpm = sum(rpm_values) / len(rpm_values)
+            print(f"Average RPM : {average_rpm:.2f}")
+
+            # Reset variables for the next second
+            #start_time = time.time()
+            #rpm_values = []
+
+            # Break the loop to start the next second
+            #break
+     """
 
 # Configure AS5600 operation
 #configureAS5600()
