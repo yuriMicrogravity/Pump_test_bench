@@ -249,6 +249,7 @@ def read_psensor_fluid():
         for i in range(2):
             raw_pressure = psensor.read_raw_pressure(osr=256)
             press, temp = psensor.convert_raw_readings(raw_pressure, raw_temperature)
-            print("fluid pressure={} mBar, fluid temperature={} C".format(press, temp))
+            #print("fluid pressure={} mBar, fluid temperature={} C".format(press, temp))
+	return press
         time.sleep(0.5)
 read_psensor_fluid()
