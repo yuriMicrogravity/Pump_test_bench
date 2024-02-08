@@ -3,6 +3,7 @@ import time
 HBridge1 = 5
 HBridge2 = 6
 GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
 GPIO.setup(HBridge1, GPIO.OUT)
 GPIO.setup(HBridge2, GPIO.OUT)
 def run_pump(direction):
