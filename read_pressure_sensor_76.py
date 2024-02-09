@@ -109,7 +109,7 @@ class MS5803(object):
         # We seem to need to give the sensor a chance to reset or reading
         # the coefficients fails. 2ms seems to be the threshold for me, so
         # use 5ms to be safe.
-        time.sleep(.005)
+        time.sleep(.05)
         self._coeffs = self._read_calibration_coeffs()
 
     def read(self, pressure_osr=512, temperature_osr=512):
@@ -225,9 +225,10 @@ class MS5803(object):
         return C1, C2, C3, C4, C5, C6
 
 # Define the I2C address of your sensor (default is 0x76)
-psensor = MS5803()
+#psensor = MS5803()
 
 def read_pressure_sensor():
+    psensor = MS5803()
     while True:
         # Read temperature and pressure
         temperature, pressure = psensor.read_temperature_and_pressure()
@@ -238,7 +239,8 @@ def read_pressure_sensor():
         time.sleep(1)  # Read every 1 second
         #except KeyboardInterrupt:
         #print("Ctrl+C pressed. Exiting...")
-def read_psensor_env():
+def read_psensor_amb():
+    psensor = MS5803()
     while True:
         #Read temperature and pressure in the fluidic channel with 14 bar sensor
         # Use the raw reads for more control, e.g. you need a faster sample
@@ -246,10 +248,14 @@ def read_psensor_env():
         # value for a slow but accurate temperature read, and a low osr value
         # for quick and inaccurate pressure readings.
         raw_temperature = psensor.read_raw_temperature(osr=512)
-        #for i in range(2):
         raw_pressure = psensor.read_raw_pressure(osr=512)
         press, temp = psensor.convert_raw_readings(raw_pressure, raw_temperature)
-        print("fluid pressure={} mBar, fluid temperature={} C".format(press, temp))
-	return press        
-	time.sleep(0.5)
-read_psensor_env()
+        #print("fluid pressure={} mBar, fluid temperature={} C".format(press, temp))
+        """ for i in range(2):
+            raw_pressure = psensor.read_raw_pressure(osr=512)
+            press, temp = psensor.convert_raw_readings(raw_pressure, raw_temperature)
+            #print("fluid pressure={} mBar, fluid temperature={} C".format(press, temp))
+            time.sleep(0.5) """
+        return press        
+	
+#read_psensor_amb()
