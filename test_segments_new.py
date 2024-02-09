@@ -7,44 +7,46 @@ from relay_updated import valve_set
 from h_bridge import run_pump
 from read_pressure_sensor_76 import read_psensor_amb
 from read_pressure_sensor_77 import read_psensor_fluid
-from as5600 import calculate_rpm, checkMagnet
+from as5600 import calculate_rpm, checkMagnet, calculate_avg_rpm
 from sensors_check import check_sensors
-from current_sensor import read_current_sensor
+#from current_sensor import read_current_sensor
 from SHT35D_temp_humidity import read_sht35d
 from slf3s_1300f import measure_flow_rate, measure_flow_rate_average, signaling_flag_air, product_id_serial
 
-""" test_config = input("Which configuration are you testing: ")
+test_config = input("Which configuration are you testing: ")
 print(f"Test commencing for the configuration {test_config} on {date.today()}")
-
+fnames = ['Test', 'Time', 'RPM', 'Current', 'Pressure', 'Flow', 'avg Flow']
 with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as test_file:
-    fnames = ['Test', 'Time', 'RPM', 'Current', 'Pressure', 'Flow', 'avg Flow']
     writer = csv.DictWriter(test_file, fieldnames=fnames, delimiter=',')
-    writer.writeheader() """
-""" With open(f'/home/pi/Documents/test reports/{test_config}_summary.csv', mode='a')as summary_file:
-writer = csv.DictWriter(summary_file, delimiter=',')
-writer.writerow([f'The test with {test_config} configuration was performed on {date.today()}'])
-"""    
+    writer.writeheader()
+
+with open(f'/home/pi/Documents/test reports/{test_config}_summary.csv', mode='a') as summary_file:
+    summary = ['summary']
+    writer = csv.DictWriter(summary_file, fieldnames=summary, delimiter=',')
+    writer.writeheader()
+
 def max_pressure_test_air_cw():
     # This function executes all steps required in the maximum pressure test for air in clockwise direction
     valve_set(1021314050)
     #Set the valve positions based on the setup
     run_pump("cw")
     #This function runs the pump in clockwise direction
+    time.sleep(1)
     start_time = time.time()
-    time_limit = 30 # 2 minutes
+    ambient_pressure = read_psensor_amb()
+    time_limit = 20 # 2 minutes
     pressure_limit = 500 # 0.5 bar delta
-    """ with open(f'{test_config}_{date.today}.csv', mode='w', newline='') as test_file:
-        writer = csv.writer(test_file)
-        header = ['Time', 'Rotation', 'Current', 'Pressure']
-        writer.writerow(header) """
+    with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as test_file:
+                writer = csv.DictWriter(test_file, fieldnames=fnames, delimiter=',')
+                writer.writeheader()
+
     try:
         while True:
             #Measure pressure
             fluid_pressure = read_psensor_fluid()
-	    ambient_pressure = read_psensor_amb()
     	    # Ensure positive difference value for current_pressure
-    	    current_pressure = abs(fluid_pressure - ambient_pressure)
-            motor_current = read_current_sensor()
+            current_pressure = abs(fluid_pressure - ambient_pressure)
+            #motor_current = read_current_sensor()
             #This function reads value from the p ressure sensor inside the fluidic loop.
 
             #Checking if the duration limit is reached
@@ -52,7 +54,7 @@ def max_pressure_test_air_cw():
                 print("Time limit for this test reached. Stopping")
                 print(f"Last pressure measured {current_pressure} mbar")
                 run_pump("stop")
-		#summary: max_pressure_test_air_cw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful.
+		        #summary: max_pressure_test_air_cw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful.
                 break
 
             #Checking if pressure in the fluidic loop is equal to or higher than the limit
@@ -60,17 +62,21 @@ def max_pressure_test_air_cw():
                 print(f"Pressure reached the limit({pressure_limit}) successfully. Stopping.")
                 print(f"Time taken to reach the max pressure limit ({time.time()}) seconds")
                 run_pump("stop")
-		#summary: max_pressure_test_air_cw pressure limit reached within ({time.time()}) seconds. Test successful.
+		        #summary: max_pressure_test_air_cw pressure limit reached within ({time.time()}) seconds. Test successful.
                 break
-
+            
             #Print or process the current pressure value
             print(f"Pressure:{current_pressure} mbar")
-            print(f"Current = {motor_current:.3f} mA")
-	    #Parameters to write in csv: test_id, time, current, pressure
+            #print(f"Current = {motor_current:.3f} mA")
+	        #Parameters to write in csv: test_id, time, current, pressure
             with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as test_file:
+                writer = csv.DictWriter(test_file, fieldnames=fnames, delimiter=',')
+                writer.writerow({'Test': '1', 'Time': datetime.now(), 'RPM': 'cw', 'Current': 'NA', 'Pressure': f'{current_pressure:.2f}', 'Flow': 'NA', 'avg Flow': 'NA'})
+
+            """ with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as test_file:
                 fnames = ['Time', 'Rotation', 'Current', 'Pressure']
                 writer = csv.DictWriter(test_file, fieldnames=fnames, delimiter=',')
-                writer.writerow({'Time': datetime.now(), 'Rotation': 'cw', 'Current': f'{motor_current:.3f}', 'Pressure': current_pressure})
+                writer.writerow({'Time': datetime.now(), 'Rotation': 'cw', 'Current': f'{motor_current:.3f}', 'Pressure': current_pressure}) """
 
             #Adjust the sleep duration based on desired measurement frequency
             time.sleep(0.5)
@@ -83,42 +89,52 @@ def min_vacuum_test_air_cw():
     #Set the valve positions based on the setup
     run_pump("cw")
     #This function runs the pump in clockwise direction
+    time.sleep(1)
     start_time = time.time()
-    time_limit = 30 # 2 minutes
+    ambient_pressure = read_psensor_amb()
+    time_limit = 20 # 2 minutes
     pressure_limit = 500 # 0.5 bar delta
+    
+    with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as test_file:
+                writer = csv.DictWriter(test_file, fieldnames=fnames, delimiter=',')
+                writer.writeheader()
+
     try:
         while True:
             #Measure pressure
             fluid_pressure = read_psensor_fluid()
-	    ambient_pressure = read_psensor_amb()
     	    # Ensure positive difference value for current_pressure
-    	    current_pressure = abs(fluid_pressure - ambient_pressure)
-            motor_current = read_current_sensor()
+            current_pressure = abs(fluid_pressure - ambient_pressure)
+            #motor_current = read_current_sensor()
             #This function reads value from the pressure sensor inside the fluidic loop.
+
+            #Print or process the current pressure value
+            print(f"Pressure:{current_pressure:.2f} mbar")
+	        #Parameters to write in csv: test_id, time, current, pressure
+            with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as test_file:
+                writer = csv.DictWriter(test_file, fieldnames=fnames, delimiter=',')
+                writer.writerow({'Test': '2', 'Time': datetime.now(), 'RPM': 'cw', 'Current': 'NA', 'Pressure': f'{current_pressure:.2f}', 'Flow': 'NA', 'avg Flow': 'NA'})
 
             #Checking if the duration limit is reached
             if time.time() - start_time >= time_limit:
                 print("Time limit for this test reached. Stopping")
-                print(f"Last pressure measured {current_pressure} mbar")
-		run_pump("stop")                
-		#summary: min_vacuum_test_air_cw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful.
-		break
+                print(f"Last pressure measured {current_pressure:.2f} mbar")
+                run_pump("stop")                
+		        #summary: min_vacuum_test_air_cw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful.
+                break
 
             #Checking if pressure in the fluidic loop is equal to or higher than the limit
-            if current_pressure <= pressure_limit:
+            if current_pressure >= pressure_limit:
                 print(f"Pressure reached the limit({pressure_limit}) successfully. Stopping.")
                 print(f"Time taken to reach the max pressure limit ({time.time()}) seconds")
-		run_pump("stop")                
-		#summary: min_vacuum_test_air_cw pressure limit reached within ({time.time()}) seconds. Test successful.
-		break
+                run_pump("stop")                
+		        #summary: min_vacuum_test_air_cw pressure limit reached within ({time.time()}) seconds. Test successful.
+                break
 
-            #Print or process the current pressure value
-            print(f"Pressure:{current_pressure} mbar")
-	    #Parameters to write in csv: test_id, time, current, pressure
-            with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as test_file:
+            """ with open(f'/home/pi/Documents/test reports/{test_config}.csv', mode='a') as test_file:
                 fnames = ['Time', 'Rotation', 'Current', 'Pressure']
                 writer = csv.DictWriter(test_file, fieldnames=fnames, delimiter=',')
-                writer.writerow({'Time': datetime.now(), 'Rotation': 'cw', 'Current': f'{motor_current:.3f}', 'Pressure': current_pressure})
+                writer.writerow({'Time': datetime.now(), 'Rotation': 'cw', 'Current': f'{motor_current:.3f}', 'Pressure': current_pressure}) """
 
             #Adjust the sleep duration based on desired measurement frequency
             time.sleep(0.5)
@@ -127,8 +143,10 @@ def min_vacuum_test_air_cw():
 
 def air_release():
     # This function releases the air by creating atmospheric pressure before moving to ccw testings for air
+    valve_set(1021314150)
+    time.sleep(5)
     valve_set(1021304150)
-    time.sleep(10)
+    time.sleep(5)
 
 def max_pressure_test_air_ccw():
     # This function executes all steps required in the maximum pressure test for air in counter-clockwise direction
@@ -136,37 +154,39 @@ def max_pressure_test_air_ccw():
     #Set the valve positions based on the setup
     run_pump("ccw")
     #This function runs the pump in counter-clockwise direction
+    time.sleep(2)
     start_time = time.time()
+    ambient_pressure = read_psensor_amb()
     time_limit = 20 # 20 seconds
-    pressure_limit = 2000 # 0.5 bar delta
+    pressure_limit = 500 # 0.5 bar delta
     try:
         while True:
             #Measure pressure
             fluid_pressure = read_psensor_fluid()
-	    ambient_pressure = read_psensor_amb()
     	    # Ensure positive difference value for current_pressure
-    	    current_pressure = abs(fluid_pressure - ambient_pressure)
+            current_pressure = abs(fluid_pressure - ambient_pressure)
+            #motor_current = read_current_sensor()
             #This function reads value from the pressure sensor inside the fluidic loop.
 
             #Checking if the duration limit is reached
             if time.time() - start_time >= time_limit:
                 print("Time limit for this test reached. Stopping")
-                print(f"Last pressure measured {current_pressure} mbar")
-		run_pump("stop")                
-		#summary: max_pressure_test_air_ccw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful.
-		break
+                print(f"Last pressure measured {current_pressure:.2f} mbar")
+                run_pump("stop")                
+		        #summary: max_pressure_test_air_ccw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful.
+                break
 
             #Checking if pressure in the fluidic loop is equal to or higher than the limit
             if current_pressure >= pressure_limit:
                 print(f"Pressure reached the limit({pressure_limit}) successfully. Stopping.")
                 print(f"Time taken to reach the max pressure limit ({time.time()}) seconds")
-		run_pump("stop")                
-		#summary: max_pressure_test_air_ccw pressure limit reached within ({time.time()}) seconds. Test successful.
-		break
+                run_pump("stop")                
+		        #summary: max_pressure_test_air_ccw pressure limit reached within ({time.time()}) seconds. Test successful.
+                break
 
             #Print or process the current pressure value
-            print(f"Pressure:{current_pressure} mbar")
-	    #Parameters to write in csv: test_id, time, current, pressure
+            print(f"Pressure:{current_pressure:.2f} mbar")
+	        #Parameters to write in csv: test_id, time, current, pressure
 
             #Adjust the sleep duration based on desired measurement frequency
             time.sleep(0.5)
@@ -177,36 +197,40 @@ def min_vacuum_test_air_ccw():
     # This function executes all steps required in the minimum vacuum test for air in counter-clockwise direction
     valve_set(1021314050)
     #Set the valve positions based on the setup
+    time.sleep(1)
     run_pump("ccw")
     #This function runs the pump in counter-clockwise direction
+    time.sleep(1)
     start_time = time.time()
-    time_limit = 20 # 20 seconds
+    ambient_pressure = read_psensor_amb()
+    time_limit = 10 # 20 seconds
     pressure_limit = 500 # 0.5 bar delta
     try:
         while True:
             #Measure pressure
-            current_pressure = read_psensor_fluid()
+            fluid_pressure = read_psensor_fluid()
             #This function reads value from the pressure sensor inside the fluidic loop.
-
+            current_pressure = abs(fluid_pressure - ambient_pressure)
+            #motor_current = read_current_sensor()
             #Checking if the duration limit is reached
             if time.time() - start_time >= time_limit:
                 print("Time limit for this test reached. Stopping")
                 print(f"Last pressure measured {current_pressure} mbar")
-		run_pump("stop")                
-		#summary: min_vacuum_test_air_cw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful.
-		break
+                run_pump("stop")                
+		        #summary: min_vacuum_test_air_cw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful.
+                break
 
             #Checking if pressure in the fluidic loop is equal to or higher than the limit
-            if current_pressure <= pressure_limit:
+            if current_pressure >= pressure_limit:
                 print(f"Pressure reached the limit({pressure_limit}) successfully. Stopping.")
                 print(f"Time taken to reach the max pressure limit ({time.time()}) seconds")
-		run_pump("stop")
-		#summary: min_vacuum_test_air_ccw pressure limit reached within ({time.time()}) seconds. Test successful.
+                run_pump("stop")
+		        #summary: min_vacuum_test_air_ccw pressure limit reached within ({time.time()}) seconds. Test successful.
                 break
 
             #Print or process the current pressure value
             print(f"Pressure:{current_pressure} mbar")
-	    #Parameters to write in csv: test_id, time, current, pressure
+	        #Parameters to write in csv: test_id, time, current, pressure
 
             #Adjust the sleep duration based on desired measurement frequency
             time.sleep(0.5)
@@ -219,7 +243,7 @@ def filling_fluidic_loop():
     #Set the valve positions based on the setup to fill the fluidic loop with distilled water to start measuring flow rate of the pump
     run_pump("cw")
     #This function runs the pump in clockwise direction
-    time.sleep(30)
+    time.sleep(45)
     run_pump("stop")
 
 def flow_rate_test_cw():
@@ -236,7 +260,7 @@ def flow_rate_test_cw():
         time.sleep(3)
     average = average / 3
     print(f"Average flow rate of the test in clockwise direction is {average:.3f} ml/min")
-#summary:(f"Average flow rate of the test in clockwise direction is {average:.3f} ml/min")
+    #summary:(f"Average flow rate of the test in clockwise direction is {average:.3f} ml/min")
 
 def max_pressure_test_water_cw():
     # This function executes all steps required in the maximum pressure test for water in clockwise direction
@@ -244,29 +268,34 @@ def max_pressure_test_water_cw():
     #Set the valve positions based on the setup to measure maximum pressure built up by pump runing in clockwise direction
     run_pump("cw")
     #This function runs the pump in clockwise direction
+    time.sleep(1)
     start_time = time.time()
+    ambient_pressure = read_psensor_amb()
     time_limit = 20 # 20 seconds
-    pressure_limit = 2000 # 2 bar delta
+    pressure_limit = 2200 # 2 bar delta
     try:
         while True:
             #Measure pressure
-            current_pressure = read_psensor_fluid()
+            fluid_pressure = read_psensor_fluid()
+    	    # Ensure positive difference value for current_pressure
+            current_pressure = abs(fluid_pressure - ambient_pressure)
             #This function reads value from the pressure sensor inside the fluidic loop.
 
             #Checking if the duration limit is reached
             if time.time() - start_time >= time_limit:
                 print("Time limit for this test reached. Stopping")
                 print(f"Last pressure measured {current_pressure} mbar")
-		run_pump("stop")                
-		#summary: max_pressure_test_water_cw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful.
-		break
+                run_pump("stop")                
+		        #summary: max_pressure_test_water_cw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful.
+                break
 
             #Checking if pressure in the fluidic loop is equal to or higher than the limit
             if current_pressure >= pressure_limit:
                 print(f"Pressure reached the limit({pressure_limit}) successfully. Stopping.")
+                print(f"Last pressure measured {current_pressure} mbar")
                 print(f"Time taken to reach the max pressure limit ({time.time()}) seconds")
-		run_pump("stop")
-		#summary: max_pressure_test_water_cw pressure limit reached within ({time.time()}) seconds. Test successful.
+                run_pump("stop")
+		        #summary: max_pressure_test_water_cw pressure limit reached within ({time.time()}) seconds. Test successful.
                 break
 
             #Print or process the current pressure value
@@ -279,8 +308,9 @@ def max_pressure_test_water_cw():
 
 def leak_test_cw():
     run_pump("stop")
+    time.sleep(1)
     start_time = time.time()
-    time_limit = 60 # 1 minute
+    time_limit = 30 # 1 minute
     initial_pressure = read_psensor_fluid()
     try:
         while True:
@@ -314,15 +344,15 @@ def flow_rate_test_ccw():
     average = 0.00
     for _ in range(3):
         run_pump("ccw")
-        time.sleep(2)
-        flow = measure_flow_rate_average(50,20)
+        #time.sleep(2)
+        flow = measure_flow_rate_average(50,60)
 	#Parameters to write in csv: test_id, time, rpm, current, flow
         average = average + flow
         run_pump("stop")
         time.sleep(3)
     average = average / 3
     print(f"Average flow rate of the test in clockwise direction is {average:.3f} ml/min")
-#summary:(f"Average flow rate of the test in clockwise direction is {average:.3f} ml/min")
+    #summary:(f"Average flow rate of the test in clockwise direction is {average:.3f} ml/min")
 
 
 def max_pressure_test_water_ccw():
@@ -331,29 +361,33 @@ def max_pressure_test_water_ccw():
     #Set the valve positions based on the setup to measure maximum pressure built up by pump runing in counter-clockwise direction
     run_pump("ccw")
     #This function runs the pump in counter-clockwise direction
+    time.sleep(1)
     start_time = time.time()
+    ambient_pressure = read_psensor_amb()
     time_limit = 20 # 20 seconds
-    pressure_limit = 2000 # 2 bar delta
+    pressure_limit = 2200 # 2 bar delta
     try:
         while True:
             #Measure pressure
-            current_pressure = read_psensor_fluid()
+            fluid_pressure = read_psensor_fluid()
+    	    # Ensure positive difference value for current_pressure
+            current_pressure = abs(fluid_pressure - ambient_pressure)
             #This function reads value from the pressure sensor inside the fluidic loop.
 
             #Checking if the duration limit is reached
             if time.time() - start_time >= time_limit:
                 print("Time limit for this test reached. Stopping")
                 print(f"Last pressure measured {current_pressure} mbar")
-		run_pump("stop")
-		#summary: max_pressure_test_water_ccw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful
+                run_pump("stop")
+		        #summary: max_pressure_test_water_ccw time limit reached with last pressure value ({current_pressure}) mbar. Test not successful
                 break
 
             #Checking if pressure in the fluidic loop is equal to or higher than the limit
             if current_pressure >= pressure_limit:
                 print(f"Pressure reached the limit({pressure_limit}) successfully. Stopping.")
                 print(f"Time taken to reach the max pressure limit ({time.time()}) seconds")
-		run_pump("stop")
-		#summary: max_pressure_test_water_cw pressure limit reached within ({time.time()}) seconds. Test successful.
+                run_pump("stop")
+		        #summary: max_pressure_test_water_cw pressure limit reached within ({time.time()}) seconds. Test successful.
                 break
 
             #Print or process the current pressure value
@@ -366,8 +400,9 @@ def max_pressure_test_water_ccw():
 
 def leak_test_ccw():
     run_pump("stop")
+    time.sleep(1)
     start_time = time.time()
-    time_limit = 60 # 1 minute
+    time_limit = 20 # 1 minute
     initial_pressure = read_psensor_fluid()
     try:
         while True:
@@ -397,18 +432,83 @@ def leak_test_ccw():
 
 def empty_fluidic_loop():
     #set valve in config that it fills with air and flushes out all water in the reservoir. 
-    valve_set()
+    valve_set(1121304150)
     run_pump("cw")
     time.sleep(30)
-    valve_set()
     run_pump("stop")
     time.sleep(2)
-    run_pump("ccw")
+    valve_set(1021314151)
+    run_pump("cw")
     time.sleep(30)
     run_pump("stop")
 
-#max_pressure_test_air_cw()
-#min_vacuum_test_air_cw()
+def full_test_sequence():
+    """ max_pressure_test_air_cw()
+    time.sleep(1)
+    air_release()
+    time.sleep(1)
+    min_vacuum_test_air_cw()
+    time.sleep(1)
+    air_release()
+    time.sleep(1)
+    max_pressure_test_air_ccw()
+    time.sleep(1)
+    air_release()
+    time.sleep(3)
+    min_vacuum_test_air_ccw()
+    time.sleep(1)
+    filling_fluidic_loop()
+    time.sleep(1)
+    flow_rate_test_cw() """
+    #time.sleep(5)
+    #max_pressure_test_water_cw()
+    #time.sleep(1)
+    #leak_test_cw()
+    #time.sleep(1)
+    #flow_rate_test_ccw()
+    time.sleep(5)
+    max_pressure_test_water_ccw()
+    time.sleep(1)
+    leak_test_ccw()
+    time.sleep(1)
+    empty_fluidic_loop()
+    time.sleep(1)
+    print("Test sequence completed successfully")
+    GPIO.cleanup()
+
+def reset_testbench():
+    run_pump("stop")
+    valve_set(1121314151)
+    time.sleep(3)
+    valve_set(1020304050)
+    time.sleep(3)
+    GPIO.cleanup()
+
+""" reset_testbench()
+time.sleep(5)
+filling_fluidic_loop()
+time.sleep(5) """
+#check_sensors()
+#checkMagnet()
+#full_test_sequence()
+#max_pressure_test_water_cw()
+#leak_test_cw()
+#reset_testbench()
+#time.sleep(1)
+#min_vacuum_test_air_ccw()
+#max_pressure_test_air_ccw()
+#max_pressure_test_water_ccw()    
+#empty_fluidic_loop()
+#full_test_sequence()
+#max_pressure_test_water_cw()
+#leak_test_ccw(
+
+""" max_pressure_test_air_cw()
+#air_release()
+time.sleep(8)
+valve_set(1121314151)
+time.sleep(8)
+max_pressure_test_water_ccw() """
 #check_sensors()
 #valve_set(112131)
 #time.sleep(3)
@@ -417,38 +517,64 @@ def empty_fluidic_loop():
 #max_pressure_test_air_cw()
 #leak_test_ccw()
 #flow_rate_test_cw()
+#max_pressure_test_water_ccw()
+#leak_test_ccw()
+#max_pressure_test_water_cw()
+#leak_test_cw()
+#reset_testbench()
 #GPIO.cleanup()
-
+#filling_fluidic_loop()
 #Standard sequence for a full run of the testbench
 #checkMagnet()
 #check_sensors()
 #test configuration name
 """ max_pressure_test_air_cw()
-min_vacuum_test_air_cw()
+time.sleep(1)
 air_release()
+time.sleep(1)
+min_vacuum_test_air_cw()
+time.sleep(1)
+air_release()
+time.sleep(1)
 max_pressure_test_air_ccw()
+time.sleep(1)
+air_release()
+time.sleep(1)
 min_vacuum_test_air_ccw()
+time.sleep(1)
 filling_fluidic_loop()
+time.sleep(1)
 flow_rate_test_cw()
+time.sleep(1)
 max_pressure_test_water_cw()
+time.sleep(1)
 leak_test_cw()
+time.sleep(1)
 flow_rate_test_ccw()
+time.sleep(1)
 max_pressure_test_water_ccw()
+time.sleep(1)
 leak_test_ccw()
+time.sleep(1)
 empty_fluidic_loop()
+time.sleep(1)
 print("Test sequence completed successfully")
 GPIO.cleanup() """
-
-#run_pump("cw")
-time.sleep(3)
+#read_psensor_fluid()
 #run_pump("stop")
-#valve_set(1020304050)
-#GPIO.cleanup()
+#time.sleep(3)
+#run_pump("ccw")
+#time.sleep(10)
+#run_pump("stop")
 #valve_set(1121314151)
+#time.sleep(3)
+#valve_set(1020304050)
+#time.sleep(3)
+#GPIO.cleanup()
 #time.sleep(3)
 #valve_set(1120304151)
 """ while True:
     read_psensor_fluid() """
 #flow_rate_test_cw()
-while True:
-    calculate_rpm()
+""" while True:
+    calculate_avg_rpm() """
