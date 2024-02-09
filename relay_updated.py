@@ -54,6 +54,14 @@ def valve_set(num):
         GPIO.output(valve3, GPIO.HIGH)
         GPIO.output(valve4, GPIO.LOW)
         GPIO.output(valve5, GPIO.HIGH)
+    elif num == 1021314150:
+        # Configuartion for air flush between cw-ccw air tests
+        print("Valve 1,5 are not active and valve 2,3,4 are active.")
+        GPIO.output(valve1, GPIO.HIGH)
+        GPIO.output(valve2, GPIO.LOW)
+        GPIO.output(valve3, GPIO.LOW)
+        GPIO.output(valve4, GPIO.LOW)
+        GPIO.output(valve5, GPIO.HIGH)
     elif num == 1121314051:
         # Configuartion for max pressure test water in cw direction 
         print("Valve 4 is not active and valve 1,2,3,5 are active.")
