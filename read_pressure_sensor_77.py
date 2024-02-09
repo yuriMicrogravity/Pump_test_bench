@@ -109,10 +109,10 @@ class MS5803(object):
         # We seem to need to give the sensor a chance to reset or reading
         # the coefficients fails. 2ms seems to be the threshold for me, so
         # use 5ms to be safe.
-        time.sleep(.005)
+        time.sleep(.05)
         self._coeffs = self._read_calibration_coeffs()
 
-    def read(self, pressure_osr=256, temperature_osr=256):
+    def read(self, pressure_osr=512, temperature_osr=512):
         '''Return current (pressure, temperature) in millibars and Celsius.
 
         Keyword arguments:
@@ -126,7 +126,7 @@ class MS5803(object):
 
         return self.convert_raw_readings(raw_pressure, raw_temperature)
 
-    def read_raw_pressure(self, osr=256):
+    def read_raw_pressure(self, osr=512):
         '''Return the raw pressure value from the sensor.
 
         The raw reading should be converted with convert_raw_readings().
@@ -138,7 +138,7 @@ class MS5803(object):
         time.sleep(MS5803.CONVERSION_TIMES[osr])
         return self._read(MS5803._CMD_READ_ADC, 3)
 
-    def read_raw_temperature(self, osr=256):
+    def read_raw_temperature(self, osr=512):
         '''Return the raw temperature value from the sensor.
 
         The raw reading should be converted with convert_raw_readings().
@@ -225,9 +225,10 @@ class MS5803(object):
         return C1, C2, C3, C4, C5, C6
 
 # Define the I2C address of your sensor (default is 0x76)
-psensor = MS5803()
+#psensor = MS5803()
 
 def read_pressure_sensor():
+    psensor = MS5803()
     while True:
         # Read temperature and pressure
         temperature, pressure = psensor.read_temperature_and_pressure()
@@ -239,17 +240,23 @@ def read_pressure_sensor():
         #except KeyboardInterrupt:
         #print("Ctrl+C pressed. Exiting...")
 def read_psensor_fluid():
+    psensor = MS5803()
     while True:
         #Read temperature and pressure in the fluidic channel with 14 bar sensor
         # Use the raw reads for more control, e.g. you need a faster sample
         # rate for pressure than for temperature. Use a high OverSampling Rate (osr)
         # value for a slow but accurate temperature read, and a low osr value
         # for quick and inaccurate pressure readings.
-        raw_temperature = psensor.read_raw_temperature(osr=256)
-        for i in range(2):
-            raw_pressure = psensor.read_raw_pressure(osr=256)
+        raw_temperature = psensor.read_raw_temperature(osr=512)
+        raw_pressure = psensor.read_raw_pressure(osr=512)
+        press, temp = psensor.convert_raw_readings(raw_pressure, raw_temperature)
+        #print("fluid pressure={} mBar, fluid temperature={} C".format(press, temp))
+        """ for i in range(2):
+            raw_pressure = psensor.read_raw_pressure(osr=512)
             press, temp = psensor.convert_raw_readings(raw_pressure, raw_temperature)
-            #print("fluid pressure={} mBar, fluid temperature={} C".format(press, temp))
-	return press
-        time.sleep(0.5)
-read_psensor_fluid()
+            print("fluid pressure={} mBar, fluid temperature={} C".format(press, temp))
+            #time.sleep(0.5) """
+        return press
+       
+""" while True:
+    read_psensor_fluid() """
