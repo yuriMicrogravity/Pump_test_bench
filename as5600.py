@@ -50,6 +50,7 @@ def readRawAngle():
     
 def checkMagnet():
     byte = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_STATUS_REG_ADDR)
+    time.sleep(1)
     byte = byte & 0x38
     if  byte == 0x20:
         print("Magnet is detected")
@@ -113,10 +114,10 @@ def calculate_rpm():
     #return rpm
     print(f"RPM: {rpm:.2f}  {direction}")
 
-""" def calculate_avg_rpm():
+def calculate_avg_rpm():
     rpm_values = []  # List to store RPM values measured every 50 milliseconds
     start_time = time.time()
-
+    average_rpm = 0
     while True:
         byte1 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR)
         byte2 = BUS.read_byte_data(AS5600_I2C_ADDR, AS5600_RAW_ANGLE_REG_ADDR+1)
@@ -138,23 +139,21 @@ def calculate_rpm():
         rpm_values.append(rpm)
 
         # Check if one second has elapsed
-        if elapsed_time >= 1:
+        if elapsed_time >= 5:
             # Compute the average RPM for the past second
             average_rpm = sum(rpm_values) / len(rpm_values)
             print(f"Average RPM : {average_rpm:.2f}")
-
-            # Reset variables for the next second
-            #start_time = time.time()
-            #rpm_values = []
-
-            # Break the loop to start the next second
-            #break
-     """
+            #Reset variables for the next second
+            start_time = time.time()
+            rpm_values = []
+            return average_rpm
+            #Break the loop to start the next second
+    
 
 # Configure AS5600 operation
 #configureAS5600()
 """ while True:
-    calculate_rpm()
+    calculate_avg_rpm()
     time.sleep(0.2) """
 # Data acquisition
 #checkMagnet()
